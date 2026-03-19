@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Практика 2 — Java: ООП и конструкции языка</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface2: #243044;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3d9ee6;
+      --accent2: #5dd39e;
+      --warn: #e6a23d;
+      --danger: #e85d75;
+      --slide-pad: clamp(1.5rem, 4vw, 3rem);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Manrope", system-ui, sans-serif;
+      font-size: clamp(14px, 1.8vw, 18px);
+      line-height: 1.45;
+      overflow: hidden;
+    }
+
+    .deck {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface2);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .toolbar button {
+      background: var(--surface2);
+      border: 1px solid #3d4f66;
+      color: var(--text);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 50%;
+    }
+
+    .progress-dots button {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border-radius: 50%;
+      border: none;
+      background: #3d4f66;
+      cursor: pointer;
+    }
+
+    .progress-dots button.active { background: var(--accent); transform: scale(1.2); }
+
+    .stage-wrap {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .stage {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: var(--slide-pad);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      animation: fadeIn 0.35s ease;
+      overflow-y: auto;
+    }
+
+    .slide.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: clamp(1.2rem, 2.8vw, 1.75rem);
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      color: var(--accent2);
+      margin: 1rem 0 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+
+    ul.clean {
+      list-style: none;
+      max-width: 52rem;
+    }
+
+    ul.clean li {
+      padding: 0.45rem 0 0.45rem 1.5rem;
+      position: relative;
+      border-left: 3px solid var(--surface2);
+      margin-bottom: 0.35rem;
+    }
+
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.85rem;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      transform: translateX(-4px);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      max-width: 56rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+    }
+
+    .card strong { color: var(--accent2); display: block; margin-bottom: 0.35rem; }
+
+    .pillars {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 1.5rem 0;
+      max-width: 56rem;
+    }
+
+    .pillar {
+      flex: 1 1 200px;
+      max-width: 280px;
+      background: linear-gradient(165deg, var(--surface) 0%, #1e2a3d 100%);
+      border: 1px solid var(--surface2);
+      border-radius: 16px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .pillar .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .pillar h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--text); }
+
+    .pillar p { font-size: 0.88rem; color: var(--muted); line-height: 1.4; }
+
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.82rem;
+    }
+
+    .flow span {
+      background: var(--surface2);
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid #3d4f66;
+    }
+
+    .flow .arrow { color: var(--muted); padding: 0 0.15rem; }
+
+    .lab-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.65rem;
+      max-width: 58rem;
+    }
+
+    .lab-map .card {
+      font-size: 0.88rem;
+      padding: 0.75rem 0.9rem;
+    }
+
+    .lab-map .card em {
+      display: block;
+      color: var(--accent);
+      font-style: normal;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    .tag {
+      display: inline-block;
+      background: rgba(61, 158, 230, 0.15);
+      color: var(--accent);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-right: 0.35rem;
+    }
+
+    .notes-panel {
+      width: min(380px, 38vw);
+      background: #121820;
+      border-left: 1px solid var(--surface2);
+      padding: 1rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      overflow-y: auto;
+      display: none;
+    }
+
+    .notes-panel.visible { display: block; }
+
+    .notes-panel h4 {
+      color: var(--warn);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+
+    .notes-panel .n-slide { display: none; margin-bottom: 1rem; }
+    .notes-panel .n-slide.active { display: block; }
+
+    .kbd {
+      font-family: "JetBrains Mono", monospace;
+      background: var(--surface2);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    .footer-hint {
+      margin-top: auto;
+      padding-top: 1rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    @media print {
+      .toolbar { display: none; }
+      .slide { position: relative; display: flex !important; page-break-after: always; min-height: 100vh; }
+      .notes-panel { display: block !important; width: 100%; border: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <header class="toolbar">
+      <button type="button" id="btnPrev" aria-label="Назад">← Назад</button>
+      <div class="progress-dots" id="dots"></div>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <button type="button" id="btnNotes">Заметки докладчика</button>
+        <button type="button" id="btnNext" aria-label="Вперёд">Вперёд →</button>
+      </div>
+    </header>
+
+    <div class="stage-wrap">
+      <main class="stage" id="stage"></main>
+      <aside class="notes-panel" id="notesPanel">
+        <h4>Спикер: подсказки к слайду</h4>
+        <div id="notesContent"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const slides = [
+      {
+        html: `
+          <h1>ООП в Java и конструкции языка</h1>
+          <p class="subtitle">Практика 2 · Современные технологии программирования</p>
+          <div class="pillars" style="margin-top:2rem;">
+            <div class="pillar"><div class="icon">🔒</div><h3>Инкапсуляция</h3><p>Скрытие состояния, контракт через API</p></div>
+            <div class="pillar"><div class="icon">🌳</div><h3>Наследование</h3><p>Общая структура и повторное использование</p></div>
+            <div class="pillar"><div class="icon">🔀</div><h3>Полиморфизм</h3><p>Один интерфейс — разные реализации</p></div>
+          </div>
+          <p class="footer-hint"><span class="kbd">→</span> / <span class="kbd">Пробел</span> — далее · <span class="kbd">←</span> — назад · <span class="kbd">N</span> — заметки</p>
+        `,
+        notes: `Открытие: три столпа ООП — то, на чём держится Java и эта лабораторная. Не перегружать теорией: обещать связь каждого столпа с кодом (класс, интерфейс, полиморфный вызов).`
+      },
+      {
+        html: `
+          <h2>Инкапсуляция</h2>
+          <p class="subtitle">Скрыть «как», показать «что можно сделать»</p>
+          <div class="grid-2">
+            <div class="card"><strong>Суть</strong>Поля <code style="color:var(--accent2);">private</code>, доступ через методы (геттеры/сеттеры и осмысленные операции: <code>deposit</code>, <code>withdraw</code>).</div>
+            <div class="card"><strong>Зачем</strong>Меньше случайных поломок, проще менять реализацию без смены контракта для остального кода.</div>
+          </div>
+          <h3>Связь с лабораторной</h3>
+          <ul class="clean">
+            <li><span class="tag">1.1</span> <strong>BankAccount</strong> — баланс только через методы; блоки инициализации задают порядок «под капотом».</li>
+            <li><span class="tag">1.2</span> <strong>EmployeeFixed</strong> — пароль не «утекает» наружу; публичный <code>authenticate</code> вместо прямого доступа к <code>validatePassword</code>.</li>
+          </ul>
+        `,
+        notes: `Акцент: инкапсуляция ≠ только private; это границы объекта. Пример: нельзя напечатать пароль из HRSystem — показать, как инкапсуляция встречается в проверке доступа.`
+      },
+      {
+        html: `
+          <h2>Наследование</h2>
+          <p class="subtitle">«Является» (is-a) и вынос общего вверх по иерархии</p>
+          <div class="flow">
+            <span>Employee</span><span class="arrow">▸</span>
+            <span>Manager</span>
+            <span class="arrow">·</span>
+            <span>Developer</span>
+            <span class="arrow">·</span>
+            <span>Intern</span>
+          </div>
+          <ul class="clean">
+            <li><strong>Абстрактный класс</strong> — общее состояние/поведение + <em>обязательные</em> различия в подклассах (<code>calculateBonus()</code>).</li>
+            <li><strong>Конструктор базы</strong> вызывается через <code>super(...)</code> до логики подкласса.</li>
+            <li>Связь: <span class="tag">2.1</span> иерархия сотрудников; шаблон «оклад + свой бонус».</li>
+          </ul>
+        `,
+        notes: `Подчеркнуть разницу: наследование для общего состояния/поведения; когда нужна только «способность» — чаще интерфейс (следующие слайды). Не смешивать с полиморфизмом на одном дыхании — следующий слайд.`
+      },
+      {
+        html: `
+          <h2>Полиморфизм</h2>
+          <p class="subtitle">Один тип ссылки — разное поведение во время выполнения</p>
+          <div class="grid-2">
+            <div class="card"><strong>Переопределение</strong> <code>@Override</code> — <code>toString()</code>, <code>calculateBonus()</code>: какой метод вызовется, решается по фактическому объекту.</div>
+            <div class="card"><strong>Полиморфная коллекция</strong> <code>Employee[]</code> или <code>List&lt;PaymentMethod&gt;</code> — единый цикл, разные реализации.</div>
+          </div>
+          <h3>В лабораторной</h3>
+          <ul class="clean">
+            <li><span class="tag">2.1</span> <code>EmployeeBonus</code> — один цикл по <code>Employee</code>, разные бонусы.</li>
+            <li><span class="tag">2.2</span> <code>PaymentMethod</code> — общий контракт <code>process</code> / <code>fee</code>.</li>
+            <li><span class="tag">8.1</span> <code>switch</code> по sealed-типу — исчерпывающая обработка вариантов.</li>
+          </ul>
+        `,
+        notes: `Ключевая фраза: «ссылка типа родителя / интерфейса, объект — конкретного класса». Можно мини-пример: вызвать один метод в цикле — разный вывод.`
+      },
+      {
+        html: `
+          <h2>Класс · Абстрактный класс · Интерфейс</h2>
+          <div class="grid-2">
+            <div class="card"><strong>Класс</strong>Экземпляр с полным состоянием; строительная единица ООП.</div>
+            <div class="card"><strong>abstract class</strong>Нельзя создать напрямую; задаёт «скелет» и общие поля; абстрактные методы реализуют наследники.</div>
+            <div class="card"><strong>interface</strong>Контракт «что умеет»; с Java 8+ — <code>default</code>/<code>static</code>/<code>private</code> методы. Множественное внедрение.</div>
+            <div class="card"><strong>sealed</strong>Ограниченный набор реализаций (интерфейс/класс) — компилятор знает все варианты → безопасный <code>switch</code>.</div>
+          </div>
+          <p class="footer-hint">Лабораторная: <span class="tag">2.1</span> abstract · <span class="tag">2.2</span> sealed + records · <span class="tag">2.3</span> interface Loggable</p>
+        `,
+        notes: `Таблица «когда что»: общее состояние + иерархия → abstract; «умеет» + несколько ролей → interface; фиксированный набор типов → sealed. Отсылка к ответу 2.4 в markdown.`
+      },
+      {
+        html: `
+          <h2>Record · Enum · Аннотации</h2>
+          <div class="grid-2">
+            <div class="card"><strong>record</strong>Неизменяемый носитель данных; компилятор генерирует конструктор, геттеры, <code>equals</code>/<code>hashCode</code>. Компактный конструктор для проверок.</div>
+            <div class="card"><strong>enum</strong>Фиксированный набор констант; могут иметь поля и методы; удобно с <code>EnumMap</code>/<code>EnumSet</code>.</div>
+            <div class="card"><strong>@interface</strong>Метаданные для кода; <code>@Retention</code>, <code>@Target</code>; разбор через Reflection.</div>
+          </div>
+          <ul class="clean">
+            <li><span class="tag">5.x</span> <code>Student</code> record, <code>Grade</code> enum, карты/множества по enum.</li>
+            <li><span class="tag">6.1</span> своя аннотация + валидация полей рефлексией.</li>
+            <li><span class="tag">8.1</span> record <code>Book</code>, sealed-иерархия предметов библиотеки.</li>
+          </ul>
+        `,
+        notes: `Record — не «замена класса», а модель данных. Enum — не строки-константы, а типобезопасность. Аннотации — мост к фреймворкам и тестам в реальной жизни.`
+      },
+      {
+        html: `
+          <h2>Паттерны и приёмы (в терминах лабораторной)</h2>
+          <div class="lab-map">
+            <div class="card"><em>Шаблонный метод</em> Общий алгоритм в базе (<code>totalCompensation</code>), шаги переопределяются (<code>calculateBonus</code>).</div>
+            <div class="card"><em>Стратегия (идея)</em> Разные реализации одного интерфейса (<code>PaymentMethod</code>) без условников по типам везде.</div>
+            <div class="card"><em>Фасад</em> Публичный <code>authenticate</code> скрывает <code>validatePassword</code>.</div>
+            <div class="card"><em>Конвейер данных</em> Stream API: фильтрация → преобразование → агрегирование (<code>OrderAnalytics</code>).</div>
+          </div>
+          <p class="subtitle" style="margin-top:1rem;">Не заучивать названия — понимать, <strong>какую проблему</strong> каждый приём решает.</p>
+        `,
+        notes: `Не называть это «экзаменом по GoF». Достаточно узнаваемости: «как в Employee — это похоже на шаблонный метод».`
+      },
+      {
+        html: `
+          <h2>Данные и память: массивы и строки</h2>
+          <ul class="clean">
+            <li><strong>Матрицы</strong> <span class="tag">3.1</span> индексация <code>[i][j]</code>, транспонирование, умножение — вложенные циклы и границы.</li>
+            <li><strong>Зубчатые массивы</strong> <span class="tag">3.2</span> разная длина строк — «журнал оценок».</li>
+            <li><strong>String / StringBuilder</strong> <span class="tag">4.1</span> неизменяемость и эффективная сборка текста.</li>
+            <li><strong>String Pool</strong> <span class="tag">4.2</span> литералы, <code>new String</code>, <code>==</code> vs <code>equals</code>, <code>intern()</code>.</li>
+          </ul>
+        `,
+        notes: `Быстро: без правильной модели индексов студенты путают строки/столбцы. String Pool — классический вопрос на собеседованиях — связать с картинкой «две ссылки на один литерал».`
+      },
+      {
+        html: `
+          <h2>Функции первого класса в Java 8+</h2>
+          <div class="flow">
+            <span>Lambda</span><span class="arrow">→</span>
+            <span>Method reference</span><span class="arrow">→</span>
+            <span>Stream</span><span class="arrow">→</span>
+            <span>Collectors</span>
+          </div>
+          <ul class="clean">
+            <li><span class="tag">7.1</span> От анонимных классов к лямбдам и к ссылкам на методы — то же поведение, меньше шума.</li>
+            <li><span class="tag">7.2</span> Агрегирование заказов: <code>groupingBy</code>, <code>partitioningBy</code>, среднее, максимум.</li>
+            <li><span class="tag">7.3</span> Композиция <code>Function</code> (<code>andThen</code>) + локальный класс для разбора текста.</li>
+          </ul>
+        `,
+        notes: `Акцент: лямбда — это реализация функционального интерфейса; ссылка на метод — когда уже есть подходящий метод. Stream — не «магия», а конвейер с ленивыми промежуточными операциями.`
+      },
+      {
+        html: `
+          <h2>Карта практики (по частям репозитория)</h2>
+          <div class="lab-map">
+            <div class="card"><em>part1</em> Блоки инициализации, <code>var</code></div>
+            <div class="card"><em>company</em> Модификаторы доступа между пакетами</div>
+            <div class="card"><em>part2</em> Иерархия, sealed, интерфейс с default/static</div>
+            <div class="card"><em>part3–4</em> Массивы, строки, анализ текста</div>
+            <div class="card"><em>part5–6</em> enum/record, аннотации, Reflection</div>
+            <div class="card"><em>part7</em> Лямбды, Stream, композиция функций</div>
+            <div class="card"><em>part8</em> Интеграция: коллекции + Stream + sealed + record</div>
+          </div>
+          <p class="footer-hint">Подпакеты: <code>partN.partN_M</code> — соответствие номеру подзадания в методичке.</p>
+        `,
+        notes: `Закрытие: «всё, что прошли слайды — есть в коде с пометками заданий». Напомнить про форк, push, сравнение вывода с Javadoc. Пригласить к вопросам.`
+      }
+    ];
+
+    let idx = 0;
+    const stage = document.getElementById("stage");
+    const dotsEl = document.getElementById("dots");
+    const notesPanel = document.getElementById("notesPanel");
+    const notesContent = document.getElementById("notesContent");
+
+    function render() {
+      stage.innerHTML = slides.map((s, i) =>
+        `<section class="slide${i === idx ? " active" : ""}" data-i="${i}">${s.html}</section>`
+      ).join("");
+
+      dotsEl.innerHTML = slides.map((_, i) =>
+        `<button type="button" data-i="${i}" class="${i === idx ? "active" : ""}" aria-label="Слайд ${i + 1}"></button>`
+      ).join("");
+
+      notesContent.innerHTML = slides.map((s, i) =>
+        `<div class="n-slide${i === idx ? " active" : ""}">${s.notes}</div>`
+      ).join("");
+
+      dotsEl.querySelectorAll("button").forEach((b) => {
+        b.onclick = () => { idx = +b.dataset.i; render(); };
+      });
+    }
+
+    function go(d) {
+      idx = Math.max(0, Math.min(slides.length - 1, idx + d));
+      render();
+    }
+
+    document.getElementById("btnPrev").onclick = () => go(-1);
+    document.getElementById("btnNext").onclick = () => go(1);
+
+    document.getElementById("btnNotes").onclick = () => {
+      notesPanel.classList.toggle("visible");
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); go(1); }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
+      if (e.key === "Home") { idx = 0; render(); }
+      if (e.key === "End") { idx = slides.length - 1; render(); }
+      if (e.key === "n" || e.key === "N") {
+        notesPanel.classList.toggle("visible");
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

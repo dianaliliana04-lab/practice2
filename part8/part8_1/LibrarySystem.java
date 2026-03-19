@@ -1,0 +1,231 @@
+package part8.part8_1;
+
+import java.util.*;
+import java.util.stream.*;
+
+/**
+ * Задание 8.1 — Система управления библиотекой (интеграционное задание)
+ *
+ * Тема: объединение всех концепций частей 1–7.
+ *
+ * Архитектура системы:
+ *
+ *   Genre (enum, Часть 5) ← Book (record, Часть 5) ← LibraryItem (sealed, Часть 2)
+ *                                                      ├── PhysicalBook (record)
+ *                                                      └── EBook (record)
+ *   Searchable (interface с default, Часть 2)
+ *   Library (класс с коллекциями и Stream API, Части 3/7)
+ *
+ * Как запустить: нажмите ▶ рядом с main.
+ */
+public class LibrarySystem {
+
+    // ======================== enum Genre (Часть 5) ========================
+
+    /**
+     * Жанры книг. Каждый жанр имеет русское название.
+     *
+     * Подсказка: FICTION("Художественная литература") и т.д.
+     */
+    enum Genre {
+        FICTION("Художественная литература"),
+        SCIENCE("Научная литература"),
+        HISTORY("История"),
+        PROGRAMMING("Программирование"),
+        ART("Искусство");
+
+        private final String russianName;
+
+        Genre(String russianName) {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            this.russianName = russianName;
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /** Возвращает русское название жанра. */
+        public String getRussianName() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return null; // TODO: верните russianName
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /**
+         * Находит жанр по русскому названию.
+         *
+         * Подсказка: пройдите по values(), сравните russianName.
+         * Если не найден — выбросите IllegalArgumentException.
+         */
+        public static Genre fromString(String name) {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            throw new UnsupportedOperationException("TODO: пройдите по values(), сравните russianName, верните найденный жанр");
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+    }
+
+    // ======================== record Book (Часть 5) ========================
+
+    /**
+     * Книга с валидацией в компактном конструкторе.
+     *
+     * Проверки:
+     *   - title и author не пустые
+     *   - year от 1450 до текущего года
+     *   - price >= 0
+     */
+    record Book(String title, String author, int year, Genre genre, double price) {
+        Book {
+            // TODO: добавьте проверки, выбросите IllegalArgumentException при нарушении
+        }
+    }
+
+    // ======================== sealed interface LibraryItem (Часть 2) ========================
+
+    /**
+     * Элемент библиотеки. Sealed — только PhysicalBook и EBook допустимы.
+     */
+    sealed interface LibraryItem permits PhysicalBook, EBook {
+        /** Возвращает информацию об элементе. */
+        String getInfo();
+
+        /** Возвращает книгу, содержащуюся в этом элементе. */
+        Book book();
+    }
+
+    /**
+     * Физическая книга с указанием полки.
+     *
+     * Подсказка для getInfo:
+     *   return "[Полка " + shelf + "] " + book.title() + " — " + book.author();
+     */
+    record PhysicalBook(Book book, String shelf) implements LibraryItem {
+        @Override
+        public String getInfo() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return ""; // TODO: верните "[Полка " + shelf + "] " + book.title() + " — " + book.author()
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+    }
+
+    /**
+     * Электронная книга с форматом и размером файла.
+     *
+     * Подсказка для getInfo:
+     *   return "[" + format + ", " + sizeMB + " МБ] " + book.title() + " — " + book.author();
+     */
+    record EBook(Book book, String format, double sizeMB) implements LibraryItem {
+        @Override
+        public String getInfo() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return ""; // TODO: верните "[" + format + ", " + sizeMB + " МБ] " + book.title() + " -- " + book.author()
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+    }
+
+    // ======================== Класс Library (Части 3, 7) ========================
+
+    /**
+     * Библиотека — хранит коллекцию LibraryItem и предоставляет методы анализа.
+     */
+    static class Library {
+        private final List<LibraryItem> items = new ArrayList<>();
+
+        /** Добавляет элемент в библиотеку. */
+        public void add(LibraryItem item) {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /**
+         * Выводит каталог с использованием switch и паттерн-матчинга (Java 21).
+         *
+         * Подсказка:
+         *   for (LibraryItem item : items) {
+         *       switch (item) {
+         *           case PhysicalBook pb -> System.out.println("Физ.: " + pb.getInfo());
+         *           case EBook eb        -> System.out.println("Эл.:  " + eb.getInfo());
+         *       }
+         *   }
+         */
+        public void printCatalog() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /**
+         * Группирует элементы по жанру через EnumMap и Stream API.
+         *
+         * Подсказка:
+         *   items.stream().collect(Collectors.groupingBy(i -> i.book().genre(), () -> new EnumMap<>(Genre.class), Collectors.toList()));
+         */
+        public Map<Genre, List<LibraryItem>> groupByGenre() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return new java.util.EnumMap<>(Genre.class); // TODO: используйте stream().collect(Collectors.groupingBy(...))
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /**
+         * Общая стоимость всех книг через Stream API.
+         *
+         * Подсказка:
+         *   return items.stream().mapToDouble(i -> i.book().price()).sum();
+         */
+        public double totalValue() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return 0; // TODO: верните items.stream().mapToDouble(i -> i.book().price()).sum()
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /**
+         * Самая дорогая книга.
+         *
+         * Подсказка:
+         *   return items.stream().map(LibraryItem::book).max(Comparator.comparingDouble(Book::price));
+         */
+        public Optional<Book> mostExpensive() {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return Optional.empty(); // TODO: items.stream().map(LibraryItem::book).max(Comparator.comparingDouble(Book::price))
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+
+        /**
+         * Уникальные авторы указанного жанра, отсортированные по алфавиту.
+         *
+         * Подсказка:
+         *   items.stream().map(LibraryItem::book).filter(b -> b.genre() == genre).map(Book::author).distinct().sorted().collect(Collectors.toList());
+         */
+        public List<String> authorsByGenre(Genre genre) {
+            // ▼ ВАШ КОД ЗДЕСЬ ▼
+            return List.of(); // TODO: используйте stream().map().filter().map().distinct().sorted().collect()
+            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+        }
+    }
+
+    // ======================== main ========================
+
+    public static void main(String[] args) {
+        Library lib = new Library();
+
+        // TODO: добавьте 8+ книг (физические и электронные). Пример:
+        // lib.add(new PhysicalBook(new Book("Война и мир", "Толстой", 1869, Genre.FICTION, 800), "A-12"));
+        // lib.add(new EBook(new Book("Clean Code", "Мартин", 2008, Genre.PROGRAMMING, 1500), "PDF", 5.2));
+
+        // TODO: вызовите и продемонстрируйте все методы Library:
+        // System.out.println("=== Каталог ===");
+        // lib.printCatalog();
+        //
+        // System.out.println("\n=== По жанрам ===");
+        // lib.groupByGenre().forEach((genre, list) -> { ... });
+        //
+        // System.out.printf("\nОбщая стоимость: %.2f руб.%n", lib.totalValue());
+        //
+        // lib.mostExpensive().ifPresent(b -> System.out.println("Самая дорогая: " + b));
+        //
+        // System.out.println("\nАвторы программирования: " + lib.authorsByGenre(Genre.PROGRAMMING));
+
+        // ▼ ВАШ КОД ЗДЕСЬ ▼
+
+        // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+    }
+}
