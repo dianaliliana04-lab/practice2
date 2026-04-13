@@ -82,10 +82,31 @@ hashSet.getClass().getSimpleName()
 ### Фактический вывод:
 
 ```
-(впишите результат)
+jshell> sealed interface Shape permits Circle, Square {}
+|  created sealed interface Shape
+
+jshell> record Circle(double r) implements Shape {}
+|  created record Circle
+
+jshell> record Square(double side) implements Shape {}
+|  created record Square
+
+jshell> Shape s = new Circle(5)
+s ==> Circle[r=5.0]
+
+jshell> s instanceof Circle c ? "Круг r=" + c.r() : "Не круг"
+$5 ==> "Круг r=5.0"
 ```
 
 ### Вопрос: Почему внутренний класс EnumSet называется `RegularEnumSet`? Что произойдёт, если enum будет иметь больше 64 констант?
 
 **Ваш ответ:**
+EnumSet внутри реализован двумя разными классами в зависимости от количества констант в enum:
+
+RegularEnumSet — используется, когда количество констант ≤ 64. Хранит элементы в виде битовой маски в поле long (64 бита).
+
+JumboEnumSet — используется, когда констант > 64. Хранит битовую маску в массиве long[].
+
+Если enum содержит более 64 констант, EnumSet.of(...) автоматически вернёт экземпляр JumboEnumSet. Это происходит прозрачно для пользователя, поэтому код, использующий EnumSet, продолжает работать без изменений. Такая оптимизация позволяет эффективно использовать память и обеспечивать высокую производительность операций с множествами enum-констант.
+
 

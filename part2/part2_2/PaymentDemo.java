@@ -11,7 +11,7 @@ public class PaymentDemo {
     public static void main(String[] args) {
         PaymentMethod[] payments = {
             new CreditCard("4111222233334444", "Иван Петров"),
-            new BankTransfer("Сбербанк", "RU1234567890"),
+            new BankTransfer(" Сбербанк", "RU1234567890"),
             new CryptoWallet("0xABC123", "BTC")
         };
 
