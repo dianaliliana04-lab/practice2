@@ -1,0 +1,1459 @@
+Subject: [PATCH] practice2
+---
+Index: answers/part10_questions.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/answers/part10_questions.md b/answers/part10_questions.md
+--- a/answers/part10_questions.md	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/answers/part10_questions.md	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -25,11 +25,26 @@
+ **Предсказанный вывод:**
+ 
+ ```
+-
++A D B C E B C 
+ ```
+ 
+ **Объяснение:**
++Порядок выполнения:
++
++Статический блок static { ... } выполняется один раз при загрузке класса, до вызова main. Выводится A.
++
++В main сначала выводится D.
++
++При new Demo():
++
++Блок экземпляра { ... } выполняется перед телом конструктора. Выводится B.
+ 
++Затем конструктор выводит C.
++
++Выводится E.
++
++Второй new Demo() снова выполняет блок экземпляра и конструктор: B C.
++Итог: A D B C E B C.
+ 
+ 
+ ---
+@@ -39,6 +54,24 @@
+ Класс `Child` в пакете `b`, класс `Parent` в пакете `a`. `Child extends Parent`. Какие члены `Parent` доступны в `Child`? А какие доступны в другом классе пакета `b`, который НЕ наследует `Parent`?
+ 
+ **Ваш ответ:**
++В подклассе Child (пакет b) доступны:
++
++public члены Parent
++
++protected члены Parent (так как наследование даёт доступ)
++
++члены с пакетным доступом (default) недоступны, потому что пакеты разные.
++
++private члены недоступны.
++
++В другом классе пакета b, который не наследует Parent:
++
++Только public члены Parent доступны.
++
++protected и пакетные члены недоступны (так как нет наследования и пакеты разные).
++
++private недоступны.
++
+ 
+ 
+ 
+@@ -49,7 +82,9 @@
+ Можно ли создать sealed-класс, у которого все наследники — record? Какое преимущество это даёт при использовании в switch?
+ 
+ **Ваш ответ:**
++Да, можно. Если все наследники sealed-класса — record, то иерархия становится полностью исчерпывающей и неизменяемой.
+ 
++Преимущество в switch: компилятор точно знает все возможные подтипы, поэтому switch по sealed-типу не требует ветки default и проверяет полноту покрытия. С record можно использовать деструктуризацию в case, получая компактный и безопасный код.
+ 
+ 
+ ---
+@@ -70,10 +105,19 @@
+ **Предсказанный вывод:**
+ 
+ ```
+-
++false
++true
++false
+ ```
+ 
+ **Объяснение:**
++a == b → false: a указывает на объект в String Pool, b — новый объект в куче.
++
++a == c → true: c = b.intern() возвращает ссылку на строку из пула (ту же, что и a).
++
++b == c → false: b — объект в куче, c — объект в пуле, разные адреса.
++
++String Pool — область в куче, где JVM кэширует уникальные строковые литералы. Метод intern() проверяет, есть ли уже такая строка в пуле: если есть — возвращает ссылку на неё, иначе добавляет и возвращает ссылку.
+ 
+ 
+ 
+@@ -90,7 +134,13 @@
+ ```
+ 
+ **Ваш ответ:**
+-
++класс C должен переопределить метод hello(), явно указав, какую версию вызывать или предоставить свою реализацию.
++class C implements A, B {
++    @Override
++    public void hello() {
++        A.super.hello();  // или B.super.hello() или своя логика
++    }
++}
+ 
+ 
+ ---
+@@ -100,6 +150,12 @@
+ В чём разница между `StringBuilder` и `StringBuffer`? Приведите конкретный сценарий, когда нужен именно `StringBuffer`.
+ 
+ **Ваш ответ:**
++StringBuilder — не потокобезопасный, работает быстрее. Используется в однопоточной среде.
++
++StringBuffer — потокобезопасный (все методы синхронизированы). Используется, когда несколько потоков одновременно изменяют одну строку.
++
++Сценарий для StringBuffer: логирование в многопоточном сервере, где несколько потоков дописывают сообщения в общий буфер перед записью в файл.
++
+ 
+ 
+ 
+@@ -119,10 +175,13 @@
+ **Предсказанный вывод:**
+ 
+ ```
+-
++10
++Если раскомментировать x = 20;, код не скомпилируется с ошибкой: local variables referenced from a lambda expression must be final or effectively final
+ ```
+ 
+ **Объяснение:**
++Лямбда-выражение захватывает локальную переменную x, которая должна быть effectively final (не изменяться после инициализации). Попытка изменить x после создания лямбды нарушает это требование. Компилятор запрещает такое изменение, чтобы избежать проблем с состоянием при отложенном выполнении лямбды.
++
+ 
+ 
+ 
+@@ -133,6 +192,8 @@
+ Напишите пример лямбда-выражения, которое нельзя заменить на ссылку на метод. Объясните почему.
+ 
+ **Ваш пример и объяснение:**
++Predicate<Integer> isEven = n -> n % 2 == 0;
++Это лямбда-выражение нельзя заменить ссылкой на метод, потому что оно содержит логическую операцию % 2 == 0, для которой нет подходящего готового метода в Java. Ссылка на метод требует, чтобы существовал метод с сигнатурой, точно соответствующей функциональному интерфейсу (например, Integer::bitCount). Произвольные выражения заменить ссылкой на метод невозможно.
+ 
+ 
+ 
+@@ -143,6 +204,7 @@
+ Чем `EnumMap` быстрее `HashMap` для ключей-enum? Опишите внутреннюю реализацию в одном предложении.
+ 
+ **Ваш ответ:**
++EnumMap хранит значения в массиве, индексированном по ordinal() ключей-enum, обеспечивая O(1) доступ без хэширования и коллизий.
+ 
+ 
+ 
+@@ -153,4 +215,16 @@
+ Дан `record Point(int x, int y) {}`. Что сгенерирует компилятор автоматически? Можно ли добавить в record изменяемое поле? Можно ли наследоваться от record?
+ 
+ **Ваш ответ:**
++Компилятор автоматически генерирует:
++
++Канонический конструктор Point(int x, int y)
++
++Геттеры x() и y() (без префикса get)
++
++Методы equals(), hashCode(), toString()
++
++Добавить изменяемое поле в record нельзя, так как все поля неявно final. Можно добавить статические поля, но не экземплярные изменяемые.
++
++Наследоваться от record нельзя: все record неявно final, поэтому запрещено создавать подклассы.
++
+ 
+Index: answers/part9_jshell.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/answers/part9_jshell.md b/answers/part9_jshell.md
+--- a/answers/part9_jshell.md	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/answers/part9_jshell.md	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -82,10 +82,31 @@
+ ### Фактический вывод:
+ 
+ ```
+-(впишите результат)
++jshell> sealed interface Shape permits Circle, Square {}
++|  created sealed interface Shape
++
++jshell> record Circle(double r) implements Shape {}
++|  created record Circle
++
++jshell> record Square(double side) implements Shape {}
++|  created record Square
++
++jshell> Shape s = new Circle(5)
++s ==> Circle[r=5.0]
++
++jshell> s instanceof Circle c ? "Круг r=" + c.r() : "Не круг"
++$5 ==> "Круг r=5.0"
+ ```
+ 
+ ### Вопрос: Почему внутренний класс EnumSet называется `RegularEnumSet`? Что произойдёт, если enum будет иметь больше 64 констант?
+ 
+ **Ваш ответ:**
++EnumSet внутри реализован двумя разными классами в зависимости от количества констант в enum:
++
++RegularEnumSet — используется, когда количество констант ≤ 64. Хранит элементы в виде битовой маски в поле long (64 бита).
++
++JumboEnumSet — используется, когда констант > 64. Хранит битовую маску в массиве long[].
++
++Если enum содержит более 64 констант, EnumSet.of(...) автоматически вернёт экземпляр JumboEnumSet. Это происходит прозрачно для пользователя, поэтому код, использующий EnumSet, продолжает работать без изменений. Такая оптимизация позволяет эффективно использовать память и обеспечивать высокую производительность операций с множествами enum-констант.
++
+ 
+Index: part1/part1_1/BankAccount.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part1/part1_1/BankAccount.java b/part1/part1_1/BankAccount.java
+--- a/part1/part1_1/BankAccount.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part1/part1_1/BankAccount.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -38,15 +38,16 @@
+     static {
+         // TODO: bankName = "Java Bank"; выведите "Банковская система инициализирована"
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        bankName = "Java Bank";
++        System.out.println("Банковская система инициализирована");
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+     {
+         // TODO: totalAccounts++; выведите "Создание счёта #" + totalAccounts
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-totalAccounts++;
+-        System.out.println("hi");
++        totalAccounts++;
++        System.out.println("Создание счёта #" + totalAccounts);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -56,7 +57,9 @@
+      */
+     public BankAccount(String owner, double initialBalance) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        this.owner = owner;
++        this.balance = initialBalance;
++        this.accountNumber = "ACC-" + totalAccounts;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -65,7 +68,11 @@
+      */
+     public void deposit(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        if (amount <= 0) {
++            System.out.println("Ошибка: сумма должна быть положительной");
++            return;
++        }
++        balance += amount;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -75,13 +82,21 @@
+      */
+     public void withdraw(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        if (amount <= 0) {
++            System.out.println("Ошибка: сумма должна быть положительной");
++            return;
++        }
++        if (balance < amount) {
++            System.out.println("Ошибка: недостаточно средств");
++            return;
++        }
++        balance -= amount;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+     public static int getTotalAccounts() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните totalAccounts
++        return totalAccounts;// TODO: верните totalAccounts
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -92,7 +107,7 @@
+     @Override
+     public String toString() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: реализуйте формат выше
++        return String.format(java.util.Locale.US,"[%s] %s: %.2f руб.", accountNumber, owner, balance);// TODO: реализуйте формат выше
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+Index: part1/part1_3/VarDemo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part1/part1_3/VarDemo.java b/part1/part1_3/VarDemo.java
+--- a/part1/part1_3/VarDemo.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part1/part1_3/VarDemo.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -36,24 +36,24 @@
+         // === Рабочие примеры var ===
+ 
+         // TODO: Пример 1 — целое число
+-        //   var number = 42;
+-         //  System.out.println(number + " -> " + ((Object) number).getClass().getSimpleName());
++        var number = 42;
++        System.out.println(number + " -> " + ((Object) number).getClass().getSimpleName());
+ 
+         // TODO: Пример 2 — строка
+-          // var text = "Java";
+-          // System.out.println(text + " -> " + text.getClass().getSimpleName());
++          var text = "Java";
++          System.out.println(text + " -> " + text.getClass().getSimpleName());
+ 
+         // TODO: Пример 3 — ArrayList
+-        //   var list = new ArrayList<>(Arrays.asList("один", "два"));
+-        //   System.out.println(list + " -> " + list.getClass().getSimpleName());
++        var list = new ArrayList<>(Arrays.asList("один", "два"));
++        System.out.println(list + " -> " + list.getClass().getSimpleName());
+ 
+         // TODO: Пример 4 — массив
+-        //   var array = new int[]{1, 2, 3};
+-        //   System.out.println(Arrays.toString(array) + " -> " + array.getClass().getSimpleName());
++        var array = new int[]{1, 2, 3};
++        System.out.println(Arrays.toString(array) + " -> " + array.getClass().getSimpleName());
+ 
+         // TODO: Пример 5 — ваш собственный объект (например, BankAccount)
+-        //   var account = new BankAccount("Тест", 0);
+-        //   System.out.println(account.getClass().getSimpleName() + " -> " + account.getClass().getSimpleName());
++        var account = new BankAccount("Тест", 0);
++        System.out.println(account.getClass().getSimpleName() + " -> " + account.getClass().getSimpleName());
+ 
+         // TODO: раскомментируйте примеры выше по одному и запустите программу.
+ 
+Index: part2/part2_1/Developer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_1/Developer.java b/part2/part2_1/Developer.java
+--- a/part2/part2_1/Developer.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_1/Developer.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -17,7 +17,7 @@
+         super(name, baseSalary);
+         // TODO: сохраните language в поле
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        this.language = language;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -29,7 +29,7 @@
+     @Override
+     public double calculateBonus() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните baseSalary * 0.12
++        return baseSalary * 0.12;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_1/Employee.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_1/Employee.java b/part2/part2_1/Employee.java
+--- a/part2/part2_1/Employee.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_1/Employee.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -34,22 +34,21 @@
+      */
+     public Employee(String name, double baseSalary) {
+         // TODO: сохраните параметры в поля:
+-        //   this.name = name;
+-        //   this.baseSalary = baseSalary;
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        this.name = name;
++        this.baseSalary = baseSalary;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+     public String getName() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return null; // TODO: верните name
++        return name; // TODO: верните name
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+     public double getBaseSalary() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните baseSalary
++        return baseSalary; // TODO: верните baseSalary
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -73,7 +72,7 @@
+      */
+     public double totalCompensation() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните baseSalary + calculateBonus()
++        return baseSalary + calculateBonus(); // TODO: верните baseSalary + calculateBonus()
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -86,7 +85,7 @@
+     @Override
+     public String toString() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните name + " | Оклад: " + baseSalary + " | Бонус: " + calculateBonus() + " | Итого: " + totalCompensation()
++        return name + " | Оклад: " + baseSalary + " | Бонус:" + calculateBonus() + " | Итого: " + totalCompensation(); // TODO: верните name + " | Оклад: " + baseSalary + " | Бонус: " + calculateBonus() + " | Итого: " + totalCompensation()
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_1/Intern.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_1/Intern.java b/part2/part2_1/Intern.java
+--- a/part2/part2_1/Intern.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_1/Intern.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -20,7 +20,7 @@
+     @Override
+     public double calculateBonus() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните 10000
++        return 10000; // TODO: верните 10000
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_1/Manager.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_1/Manager.java b/part2/part2_1/Manager.java
+--- a/part2/part2_1/Manager.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_1/Manager.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -17,7 +17,7 @@
+         super(name, baseSalary);
+         // TODO: сохраните teamSize в поле
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        this.teamSize = teamSize;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -29,7 +29,7 @@
+     @Override
+     public double calculateBonus() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните baseSalary * 0.15 + teamSize * 5000
++        return baseSalary; // TODO: верните baseSalary * 0.15 + teamSize * 5000
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_2/BankTransfer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_2/BankTransfer.java b/part2/part2_2/BankTransfer.java
+--- a/part2/part2_2/BankTransfer.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_2/BankTransfer.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -17,7 +17,7 @@
+     @Override
+     public String process(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните "Перевод через " + bankName + ": " + amount + " руб."
++        return "Перевод через" + bankName + ":" + amount + "руб. "; // TODO: верните "Перевод через " + bankName + ": " + amount + " руб."
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -27,7 +27,7 @@
+     @Override
+     public double fee(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните 50.0
++        return 50.0; // TODO: верните 50.0
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_2/CreditCard.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_2/CreditCard.java b/part2/part2_2/CreditCard.java
+--- a/part2/part2_2/CreditCard.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_2/CreditCard.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -21,7 +21,7 @@
+     @Override
+     public String process(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните "Оплата картой *" + cardNumber.substring(cardNumber.length()-4) + ": " + amount + " руб."
++        return "Оплата картой * "+ cardNumber.substring(cardNumber.length()-4) + ": " + amount + " руб."; // TODO: верните "Оплата картой *" + cardNumber.substring(cardNumber.length()-4) + ": " + amount + " руб."
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -33,7 +33,7 @@
+     @Override
+     public double fee(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните amount * 0.02
++        return amount * 0.02; // TODO: верните amount * 0.02
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_2/CryptoWallet.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_2/CryptoWallet.java b/part2/part2_2/CryptoWallet.java
+--- a/part2/part2_2/CryptoWallet.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_2/CryptoWallet.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -17,7 +17,7 @@
+     @Override
+     public String process(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните "Криптоплатёж (" + currency + "): " + amount + " руб."
++        return "Криптоплатёж (" + currency + "):"  + amount + " руб."; // TODO: верните "Криптоплатёж (" + currency + "): " + amount + " руб."
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -29,7 +29,7 @@
+     @Override
+     public double fee(double amount) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните amount * 0.015
++        return amount * 0.015; // TODO: верните amount * 0.015
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_2/PaymentDemo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_2/PaymentDemo.java b/part2/part2_2/PaymentDemo.java
+--- a/part2/part2_2/PaymentDemo.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_2/PaymentDemo.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -11,7 +11,7 @@
+     public static void main(String[] args) {
+         PaymentMethod[] payments = {
+             new CreditCard("4111222233334444", "Иван Петров"),
+-            new BankTransfer("Сбербанк", "RU1234567890"),
++            new BankTransfer(" Сбербанк", "RU1234567890"),
+             new CryptoWallet("0xABC123", "BTC")
+         };
+ 
+Index: part2/part2_2/PaymentProcessor.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_2/PaymentProcessor.java b/part2/part2_2/PaymentProcessor.java
+--- a/part2/part2_2/PaymentProcessor.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_2/PaymentProcessor.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -31,7 +31,17 @@
+      */
+     public static void describe(PaymentMethod pm) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        switch (pm) {
++            case CreditCard cc ->
++                    System.out.println("Оплата картой. Держатель: " + cc.holder() +
++                            ", последние 4 цифры: " + cc.cardNumber().substring(cc.cardNumber().length() - 4));
++            case BankTransfer bt ->
++                    System.out.println("Банковский перевод. Банк: " + bt.bankName() +
++                            ", IBAN: " + bt.iban());
++            case CryptoWallet cw ->
++                    System.out.println("Криптокошелёк. Валюта: " + cw.currency() +
++                            ", адрес: " + cw.address());
++        }
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_3/AuthService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_3/AuthService.java b/part2/part2_3/AuthService.java
+--- a/part2/part2_3/AuthService.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_3/AuthService.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -11,7 +11,7 @@
+     @Override
+     public String getComponentName() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните "AuthService"
++        return "AuthService"; // TODO: верните "AuthService"
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -24,7 +24,11 @@
+      */
+     public void login(String username, boolean success) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        if (success) {
++            log("Вход пользователя: " + username + " — успешно");
++        } else {
++            logError("Вход пользователя: " + username + " — отказано");
++        }
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_3/DatabaseService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_3/DatabaseService.java b/part2/part2_3/DatabaseService.java
+--- a/part2/part2_3/DatabaseService.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_3/DatabaseService.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -14,7 +14,7 @@
+     @Override
+     public String getComponentName() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните "DatabaseService"
++        return "DatabaseService"; // TODO: верните "DatabaseService"
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -27,7 +27,8 @@
+      */
+     public void connect(String url) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        log("Подключение к " +url);
++        log("Подключение установлено");
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part2/part2_3/Loggable.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part2/part2_3/Loggable.java b/part2/part2_3/Loggable.java
+--- a/part2/part2_3/Loggable.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part2/part2_3/Loggable.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -32,7 +32,7 @@
+      */
+     default void log(String message) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        System.out.println("[" + formatTimestamp() + "] [" + getComponentName() + "] " + message);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -43,7 +43,7 @@
+      */
+     default void logError(String message) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        log("ОШИБКА: " + message);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -55,7 +55,7 @@
+      */
+     private String formatTimestamp() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
++        return LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")); // TODO: верните LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -67,7 +67,7 @@
+      */
+     static String getLogLevel() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return ""; // TODO: верните "INFO"
++        return "INFO"; // TODO: верните "INFO"
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part3/part3_1/MatrixOperations.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part3/part3_1/MatrixOperations.java b/part3/part3_1/MatrixOperations.java
+--- a/part3/part3_1/MatrixOperations.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part3/part3_1/MatrixOperations.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -115,9 +115,10 @@
+     public static int diagonalSum(int[][] matrix) {
+         int sum = 0;
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-       // for (int i = 0; i < ?; i++) {
+-       //     sum += matrix[?][?];
+-        //}
++        int size = matrix.length;
++        for (int i = 0; i < size; i++) {
++            sum += matrix[i][i];
++        }
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         return sum;
+     }
+Index: part3/part3_2/GradeJournal.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part3/part3_2/GradeJournal.java b/part3/part3_2/GradeJournal.java
+--- a/part3/part3_2/GradeJournal.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part3/part3_2/GradeJournal.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -41,7 +41,11 @@
+      */
+     public static double average(int[] grades) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: просуммируйте все элементы, разделите на (double) grades.length
++        int sum = 0;
++        for (int g : grades) {
++            sum += g;
++        }
++        return (double) sum / grades.length; // TODO: просуммируйте все элементы, разделите на (double) grades.length
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -53,7 +57,13 @@
+      */
+     public static int max(int[] grades) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: начните с grades[0], пройдите циклом, обновляйте максимум
++        int maxVal = grades[0];
++        for (int g : grades) {
++            if (g > maxVal) {
++                maxVal = g;
++            }
++        }
++        return maxVal;// TODO: начните с grades[0], пройдите циклом, обновляйте максимум
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -65,7 +75,13 @@
+      */
+     public static int min(int[] grades) {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: начните с grades[0], пройдите циклом, обновляйте минимум
++        int minVal = grades[0];
++        for (int g : grades) {
++            if (g < minVal) {
++                minVal = g;
++            }
++        }
++        return minVal; // TODO: начните с grades[0], пройдите циклом, обновляйте минимум
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+Index: part4/part4_1/TextAnalyzer.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part4/part4_1/TextAnalyzer.java b/part4/part4_1/TextAnalyzer.java
+--- a/part4/part4_1/TextAnalyzer.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part4/part4_1/TextAnalyzer.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -45,7 +45,7 @@
+      */
+     public int wordCount() {
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        return 0; // TODO: верните text.split(" ").length
++        return text.split(" ").length; // TODO: верните text.split(" ").length
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+@@ -60,8 +60,11 @@
+         String[] words = text.split(" ");
+         String best = words[0];
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
+-
++        for (int i = 1; i < words.length; i++) {
++            if (words[i].length() > best.length()) {
++                best = words[i];
++            }
++        }
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         return best;
+ 
+@@ -106,7 +109,7 @@
+             count++;
+             from = idx + 1;
+         }
+-        return 0; // ???
++        return count; // ???
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ 
+Index: part4/part4_2/StringPoolLab.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part4/part4_2/StringPoolLab.java b/part4/part4_2/StringPoolLab.java
+--- a/part4/part4_2/StringPoolLab.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part4/part4_2/StringPoolLab.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -40,33 +40,33 @@
+ 
+         System.out.println("=== Сравнение строк ===\n");
+ 
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: true (true/false). Причина: оба ссылаются на один и тот же литерал в пуле
+         System.out.println("s1 == s2      : " + (s1 == s2));
+         System.out.println("s1.equals(s2) : " + s1.equals(s2));
+         System.out.println();
+ 
+         // TODO: запишите свой прогноз ПЕРЕД запуском
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: false (true/false). Причина: Причина: s1 из пула, s3 — новый объект в куче
+         System.out.println("s1 == s3      : " + (s1 == s3));
+         System.out.println("s1.equals(s3) : " + s1.equals(s3));
+         System.out.println();
+ 
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: false (true/false). Причина: два разных объекта в куче
+         System.out.println("s3 == s4      : " + (s3 == s4));
+         System.out.println("s3.equals(s4) : " + s3.equals(s4));
+         System.out.println();
+ 
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: true (true/false). Причина: intern() возвращает ссылку из пула (ту же, что s1)
+         System.out.println("s1 == s5      : " + (s1 == s5));
+         System.out.println("s1.equals(s5) : " + s1.equals(s5));
+         System.out.println();
+ 
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: true (true/false). Причина: конкатенация литералов оптимизируется компилятором в "Hello" из пула
+         System.out.println("s1 == s6      : " + (s1 == s6));
+         System.out.println("s1.equals(s6) : " + s1.equals(s6));
+         System.out.println();
+ 
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: false (true/false). Причина: конкатенация с переменной создает новый объект в рантайме
+         System.out.println("s1 == s7      : " + (s1 == s7));
+         System.out.println("s1.equals(s7) : " + s1.equals(s7));
+         System.out.println();
+@@ -78,7 +78,7 @@
+         sb.append('H').append('e').append('l').append('l').append('o');
+         String s8 = sb.toString();
+ 
+-        // Прогноз: ____ (true/false). Причина: ____
++        // Прогноз: false (true/false). Причина: StringBuilder создает новый объект String
+         System.out.println("s1 == s8      : " + (s1 == s8));
+         System.out.println("s1.equals(s8) : " + s1.equals(s8));
+     }
+Index: part5/part5_1/GradeSystem.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part5/part5_1/GradeSystem.java b/part5/part5_1/GradeSystem.java
+--- a/part5/part5_1/GradeSystem.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part5/part5_1/GradeSystem.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -58,14 +58,14 @@
+         /** Возвращает описание оценки (например, "Отлично"). */
+         public String getDescription() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-            return null; // TODO: верните description
++            return description; // TODO: верните description
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+         /** Возвращает GPA-значение (например, 4.0). */
+         public double getGpaValue() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-            return 0; // TODO: верните gpaValue
++            return gpaValue; // TODO: верните gpaValue
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+@@ -76,7 +76,7 @@
+          */
+         public boolean isPassing() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-            return false; // TODO: верните this != F && this != D
++            return this != F && this != D;
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+@@ -90,7 +90,11 @@
+          */
+         public static Grade fromScore(int score) {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-            return F; // TODO: if (score >= 90) return A; else if (score >= 80) return B; ...
++            if (score >= 90) return A;
++            else if (score >= 80) return B;
++            else if (score >= 70) return C;
++            else if (score >= 60) return D;
++            else return F;
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+     }
+@@ -112,6 +116,12 @@
+     record Student(String name, int id) {
+         Student {
+             // TODO: проверьте, что name не null и не пустое, id > 0
++            if (name == null || name.isBlank()) {
++                throw new IllegalArgumentException("Имя не может быть пустым");
++            }
++            if (id <= 0) {
++                throw new IllegalArgumentException("ID должен быть положительным");
++            }
+             // Выбросите IllegalArgumentException при нарушении
+         }
+     }
+@@ -145,26 +155,29 @@
+                 new Student("Глеб", 4),
+                 new Student("Дмитрий", 5),
+                 new Student("Елена", 6),
+-                new Student("ваш имя???", 7)
++                new Student("Жанна", 7)
+         };
+         int[] scores = {95, 82, 71, 58, 88, 90, 65};
++
+         var gradeMap = new EnumMap<Grade, List<Student>>(Grade.class);
+         double gpaSum = 0;
++
+         for (int i = 0; i < students.length; i++) {
+             Grade g = Grade.fromScore(scores[i]);
+             gradeMap.computeIfAbsent(g, k -> new ArrayList<>()).add(students[i]);
+             gpaSum += g.getGpaValue();
+         }
++
+         var passingGrades = EnumSet.of(Grade.A, Grade.B, Grade.C);
++
+         System.out.println("=== Студенты по оценкам (проходные: A, B, C) ===");
+         for (Grade g : Grade.values()) {
+             List<Student> list = gradeMap.get(g);
+-            if (list == null || list.isEmpty()) {
+-                continue;
+-            }
++            if (list == null || list.isEmpty()) continue;
+             System.out.println(g + " (" + g.getDescription() + "): " +
+                     list.stream().map(Student::name).toList());
+         }
++
+         System.out.println("\nПроходные категории EnumSet: " + passingGrades);
+         System.out.printf("Средний GPA по выборке: %.2f%n", gpaSum / students.length);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+Index: part5/part5_2/RecordEnumDemo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part5/part5_2/RecordEnumDemo.java b/part5/part5_2/RecordEnumDemo.java
+--- a/part5/part5_2/RecordEnumDemo.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part5/part5_2/RecordEnumDemo.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -43,7 +43,12 @@
+             //      };
+             //   2. if (kelvin < 0) throw new IllegalArgumentException("Ниже абсолютного нуля");
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++            double kelvin = switch (unit) {
++                case CELSIUS    -> value + 273.15;
++                case FAHRENHEIT -> (value - 32) * 5.0/9.0 + 273.15;
++                case KELVIN     -> value;
++            };
++            if (kelvin < 0) throw new IllegalArgumentException("Ниже абсолютного нуля");
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+@@ -109,26 +114,29 @@
+         ADD {
+             @Override
+             public double apply(double a, double b) {
+-                return 0; // TODO: верните a + b
++                return a + b; // TODO: верните a + b
+             }
+         },
+         SUBTRACT {
+             @Override
+             public double apply(double a, double b) {
+-                return 0; // TODO: верните a - b
++                return a - b; // TODO: верните a - b
+             }
+         },
+         MULTIPLY {
+             @Override
+             public double apply(double a, double b) {
+-                return 0; // TODO: верните a * b
++                return a * b; // TODO: верните a * b
+             }
+         },
+         DIVIDE {
+             @Override
+             public double apply(double a, double b) {
+                 // TODO: проверьте b != 0, иначе throw new ArithmeticException("Деление на ноль")
+-                return 0; // TODO: верните a / b (с проверкой на ноль)
++                if (b == 0) {
++                    throw new ArithmeticException("Деление на ноль");
++                }
++                return a / b; // TODO: верните a / b (с проверкой на ноль)
+             }
+         };
+ 
+Index: part6/part6_1/TestInfo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part6/part6_1/TestInfo.java b/part6/part6_1/TestInfo.java
+--- a/part6/part6_1/TestInfo.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part6/part6_1/TestInfo.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -25,8 +25,9 @@
+ 
+ // TODO: замените SOURCE на правильную политику, чтобы аннотация была доступна через Reflection
+ // Подсказка: SOURCE → стирается при компиляции, CLASS → только в байткоде, RUNTIME → доступна через Reflection
+-@Retention(RetentionPolicy.SOURCE)
+-// Вопрос: почему здесь указано METHOD? Что будет, если заменить на TYPE или FIELD?
++@Retention(RetentionPolicy.RUNTIME)
++// Вопрос: почему здесь указано METHOD? --чтобы аннотацию можно было ставить только на методы
++// Что будет, если заменить на TYPE или FIELD? --иначе @TestInfo на методах вызовет ошибку компиляции
+ @Target(ElementType.METHOD)
+ @interface TestInfo {
+     String author();
+Index: part6/part6_1/ValidationFramework.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part6/part6_1/ValidationFramework.java b/part6/part6_1/ValidationFramework.java
+--- a/part6/part6_1/ValidationFramework.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part6/part6_1/ValidationFramework.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -109,7 +109,7 @@
+                 }
+             }
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-            return new ArrayList<>();//???????????
++            return errors;//???????????
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+     }
+Index: part7/part7_1/RefactorStep1.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part7/part7_1/RefactorStep1.java b/part7/part7_1/RefactorStep1.java
+--- a/part7/part7_1/RefactorStep1.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part7/part7_1/RefactorStep1.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -26,37 +26,43 @@
+ 
+         // 1. Сортировка по длине → замените анонимный класс на лямбду
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // cities.sort((a, b) -> Integer.compare(a.length(), b.length()));
++         cities.sort((a, b) -> Integer.compare(a.length(), b.length()));
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 2. Вывод каждого элемента
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // cities.forEach(city -> System.out.println(city));
++         cities.forEach(city -> System.out.println(city));
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 3. Преобразование в верхний регистр
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Function<String, String> toUpper = s -> s.toUpperCase();
++         Function<String, String> toUpper = s -> s.toUpperCase();
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 4. Проверка длины > 5
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Predicate<String> isLong = s -> s.length() > 5;
++         Predicate<String> isLong = s -> s.length() > 5;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 5. Формирование строки с восклицательным знаком
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Function<String, String> exclaim = s -> s + "!";
++         Function<String, String> exclaim = s -> s + "!";
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 6. Создание нового списка
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Supplier<List<String>> listFactory = () -> new ArrayList<>();
++         Supplier<List<String>> listFactory = () -> new ArrayList<>();
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // Использование (скопируйте из RefactorOriginal и адаптируйте)
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        List<String> result = listFactory.get();
++        for (String city : cities) {
++            if (isLong.test(city)) {
++                result.add(toUpper.apply(city));
++            }
++        }
++        System.out.println("Длинные города: " + result);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part7/part7_1/RefactorStep2.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part7/part7_1/RefactorStep2.java b/part7/part7_1/RefactorStep2.java
+--- a/part7/part7_1/RefactorStep2.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part7/part7_1/RefactorStep2.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -31,44 +31,50 @@
+         //   Подсказка: нет, потому что вызывается a.length() — это не прямой вызов одного метода.
+         //   Используйте Comparator.comparingInt(String::length)
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // cities.sort(Comparator.comparingInt(String::length));
++         cities.sort(Comparator.comparingInt(String::length));
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 2. Вывод каждого элемента
+         //   city -> System.out.println(city) → System.out::println
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // cities.forEach(System.out::println);
++         cities.forEach(System.out::println);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 3. Преобразование в верхний регистр
+         //   s -> s.toUpperCase() → String::toUpperCase
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Function<String, String> toUpper = String::toUpperCase;
++         Function<String, String> toUpper = String::toUpperCase;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 4. Проверка длины > 5
+         //   Можно ли заменить s -> s.length() > 5 на ссылку?
+         //   Ответ: нет — это не вызов одного метода, а выражение с операцией сравнения.
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Predicate<String> isLong = s -> s.length() > 5;  // оставляем лямбду
++         Predicate<String> isLong = s -> s.length() > 5;  // оставляем лямбду
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 5. Формирование строки с восклицательным знаком
+         //   Можно ли заменить s -> s + "!" на ссылку?
+         //   Ответ: нет — это конкатенация, а не вызов метода.
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Function<String, String> exclaim = s -> s + "!";  // оставляем лямбду
++        Function<String, String> exclaim = s -> s + "!";  // оставляем лямбду
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // 6. Создание нового списка
+         //   () -> new ArrayList<>() → ArrayList::new
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // Supplier<List<String>> listFactory = ArrayList::new;
++        Supplier<List<String>> listFactory = ArrayList::new;
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // Использование (скопируйте из RefactorStep1 и адаптируйте)
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++        List<String> result = listFactory.get();
++        for (String city : cities) {
++            if (isLong.test(city)) {
++                result.add(toUpper.apply(city));
++            }
++        }
++        System.out.println("Длинные города: " + result);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part7/part7_2/OrderAnalytics.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part7/part7_2/OrderAnalytics.java b/part7/part7_2/OrderAnalytics.java
+--- a/part7/part7_2/OrderAnalytics.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part7/part7_2/OrderAnalytics.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -45,56 +45,56 @@
+         // --- Задание 1: Заказы дороже 5000 руб. (по total()) ---
+         System.out.println("=== Заказы дороже 5000 руб. ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // orders.stream().filter(o -> o.total() > 5000).forEach(System.out::println);
++        orders.stream().filter(o -> o.total() > 5000).forEach(System.out::println);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 2: Уникальные клиенты, отсортированные по алфавиту ---
+         System.out.println("\n=== Уникальные клиенты ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // var clients = orders.stream().map(Order::customer).distinct().sorted().collect(Collectors.toList());
+-        // System.out.println(clients);
++         var clients = orders.stream().map(Order::customer).distinct().sorted().collect(Collectors.toList());
++         System.out.println(clients);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 3: Общая выручка ---
+         System.out.println("\n=== Общая выручка ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // double total = orders.stream().mapToDouble(Order::total).sum();
+-        // System.out.printf("%.2f руб.%n", total);
++         double total = orders.stream().mapToDouble(Order::total).sum();
++         System.out.printf("%.2f руб.%n", total);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 4: Самый дорогой заказ ---
+         System.out.println("\n=== Самый дорогой заказ ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // orders.stream().max(Comparator.comparingDouble(Order::total)).ifPresent(System.out::println);
++         orders.stream().max(Comparator.comparingDouble(Order::total)).ifPresent(System.out::println);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 5: Количество заказов в каждой категории ---
+         System.out.println("\n=== Заказы по категориям ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // var byCategory = orders.stream().collect(Collectors.groupingBy(Order::category, Collectors.counting()));
+-        // byCategory.forEach((cat, count) -> System.out.println(cat + ": " + count));
++         var byCategory = orders.stream().collect(Collectors.groupingBy(Order::category, Collectors.counting()));
++         byCategory.forEach((cat, count) -> System.out.println(cat + ": " + count));
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 6: Средняя стоимость заказа по каждому клиенту ---
+         System.out.println("\n=== Средняя стоимость по клиентам ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // var avgByClient = orders.stream().collect(Collectors.groupingBy(Order::customer, Collectors.averagingDouble(Order::total)));
+-        // avgByClient.forEach((client, avg) -> System.out.printf("%s: %.2f руб.%n", client, avg));
++         var avgByClient = orders.stream().collect(Collectors.groupingBy(Order::customer, Collectors.averagingDouble(Order::total)));
++         avgByClient.forEach((client, avg) -> System.out.printf("%s: %.2f руб.%n", client, avg));
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 7: Дорогие (total > 3000) и дешёвые заказы ---
+         System.out.println("\n=== Дорогие vs дешёвые ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // var partitioned = orders.stream().collect(Collectors.partitioningBy(o -> o.total() > 3000));
+-        // System.out.println("Дорогие: " + partitioned.get(true).size());
+-        // System.out.println("Дешёвые: " + partitioned.get(false).size());
++         var partitioned = orders.stream().collect(Collectors.partitioningBy(o -> o.total() > 3000));
++         System.out.println("Дорогие: " + partitioned.get(true).size());
++         System.out.println("Дешёвые: " + partitioned.get(false).size());
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+ 
+         // --- Задание 8: Товары дороже 1000, без дубликатов, в верхнем регистре ---
+         System.out.println("\n=== Товары дороже 1000 (uppercase) ===");
+         // ▼ ВАШ КОД ЗДЕСЬ ▼
+-        // var products = orders.stream().filter(o -> o.price() > 1000).map(Order::product).distinct().map(String::toUpperCase).collect(Collectors.toList());
+-        // System.out.println(products);
++         var products = orders.stream().filter(o -> o.price() > 1000).map(Order::product).distinct().map(String::toUpperCase).collect(Collectors.toList());
++         System.out.println(products);
+         // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+     }
+ }
+Index: part7/part7_3/TextPipeline.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part7/part7_3/TextPipeline.java b/part7/part7_3/TextPipeline.java
+--- a/part7/part7_3/TextPipeline.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part7/part7_3/TextPipeline.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -24,21 +24,23 @@
+         // ▼ ВАШ КОД ЗДЕСЬ (Часть A) ▼
+ 
+         // TODO: создайте 4 функции Function<String, String>:
+-        //   Function<String, String> trim = String::trim;
+-        //   Function<String, String> lower = String::toLowerCase;
+-        //   Function<String, String> removeExtraSpaces = s -> s.replaceAll("\\s+", " ");
+-        //   Function<String, String> capitalize = s -> s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
++        Function<String, String> trim = String::trim;
++        Function<String, String> lower = String::toLowerCase;
++        Function<String, String> removeExtraSpaces = s -> s.replaceAll("\\s+", " ");
++        Function<String, String> capitalize = s -> s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
+ 
+         // TODO: скомпонуйте в одну функцию:
+-        //   var normalize = trim.andThen(lower).andThen(removeExtraSpaces).andThen(capitalize);
++        var normalize = trim.andThen(lower).andThen(removeExtraSpaces).andThen(capitalize);
+ 
+         // TODO: примените к нескольким строкам:
+         String[] testStrings = {
+-            "  пРИВЕТ    МИР  ",
+-            "   jAVA   пРОГРАММИРОВАНИЕ   ",
+-            "ТЕСТ"
++                "  пРИВЕТ    МИР  ",
++                "   jAVA   пРОГРАММИРОВАНИЕ   ",
++                "ТЕСТ"
+         };
+-        // for (String s : testStrings) System.out.println("\"" + s + "\" → \"" + normalize.apply(s) + "\"");
++        for (String s : testStrings) {
++            System.out.println("\"" + s + "\" → \"" + normalize.apply(s) + "\"");
++        }
+ 
+         // ▲ КОНЕЦ ВАШЕГО КОДА (Часть A) ▲
+ 
+@@ -46,24 +48,37 @@
+         // ▼ ВАШ КОД ЗДЕСЬ (Часть B) ▼
+ 
+         // TODO: объявите локальный класс WordCounter прямо здесь, внутри main:
+-        //
+-        // class WordCounter {
+-        //     private final String text;
+-        //     WordCounter(String text) { this.text = text; }
+-        //
+-        //     Map<String, Integer> count() {
+-        //         // Подсказка: split(" "), создайте Map, в цикле map.merge(word, 1, Integer::sum)
+-        //     }
+-        //
+-        //     String mostFrequent() {
+-        //         // Подсказка: count().entrySet().stream().max(Map.Entry.comparingByValue())
+-        //     }
+-        // }
++        class WordCounter {
++            private final String text;
++            WordCounter(String text) { this.text = text; }
++
++            Map<String, Integer> count() {
++                Map<String, Integer> freq = new HashMap<>();
++                String[] words = text.split(" ");
++                for (String word : words) {
++                    if (!word.isEmpty()) {
++                        // Приводим к нижнему регистру для корректного подсчёта
++                        freq.merge(word.toLowerCase(), 1, Integer::sum);
++                    }
++                }
++                return freq;
++            }
++
++            String mostFrequent() {
++                return count().entrySet().stream()
++                        .max(Map.Entry.comparingByValue())
++                        .map(Map.Entry::getKey)
++                        .orElse("");
++            }
++        }
+ 
+         // TODO: используйте WordCounter для анализа нормализованной строки:
+-        // var wc = new WordCounter(normalize.apply("  java java PYTHON  java python  "));
+-        // System.out.println("Частоты: " + wc.count());
+-        // System.out.println("Самое частое: " + wc.mostFrequent());
++        String sample = normalize.apply("  java java PYTHON  java python  ");
++        var wc = new WordCounter(sample);
++        System.out.println("=== Анализ текста ===");
++        System.out.println("Нормализованный текст: \"" + sample + "\"");
++        System.out.println("Частоты слов: " + wc.count());
++        System.out.println("Самое частое слово: " + wc.mostFrequent());
+         // ▲ КОНЕЦ ВАШЕГО КОДА (Часть B) ▲
+     }
+-}
++}
+\ No newline at end of file
+Index: part8/part8_1/LibrarySystem.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/part8/part8_1/LibrarySystem.java b/part8/part8_1/LibrarySystem.java
+--- a/part8/part8_1/LibrarySystem.java	(revision 4c36b395bddb2d2a6ca4e876ab214c2bad181894)
++++ b/part8/part8_1/LibrarySystem.java	(revision 073c9acaa17e36fcdf0ec9edc458b369cb6601ef)
+@@ -46,8 +46,7 @@
+         /** Возвращает русское название жанра. */
+         public String getRussianName() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-return "";
+-
++            return russianName;
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+@@ -119,7 +118,6 @@
+         @Override
+         public String getInfo() {
+             return "[Полка " + shelf + "] " + book.title() + " — " + book.author();
+-
+         }
+     }
+ 
+@@ -133,7 +131,6 @@
+         @Override
+         public String getInfo() {
+             return "[" + format + ", " + sizeMB + " МБ] " + book.title() + " — " + book.author();
+-
+         }
+     }
+ 
+@@ -165,7 +162,12 @@
+          */
+         public void printCatalog() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-
++            for (LibraryItem item : items) {
++                switch (item) {
++                    case PhysicalBook pb -> System.out.println("Физ.: " + pb.getInfo());
++                    case EBook eb        -> System.out.println("Эл.:  " + eb.getInfo());
++                }
++            }
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+@@ -176,12 +178,10 @@
+          *   items.stream().collect(Collectors.groupingBy(i -> i.book().genre(), () -> new EnumMap<>(Genre.class), Collectors.toList()));
+          */
+         public Map<Genre, List<LibraryItem>> groupByGenre() {
+-
+             return items.stream().collect(Collectors.groupingBy(
+                     i -> i.book().genre(),
+                     () -> new EnumMap<>(Genre.class),
+                     Collectors.toList()));
+-
+         }
+ 
+         /**
+@@ -192,7 +192,7 @@
+          */
+         public double totalValue() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-return 0.0;
++            return items.stream().mapToDouble(i -> i.book().price()).sum();
+             // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+@@ -204,8 +204,8 @@
+          */
+         public Optional<Book> mostExpensive() {
+             // ▼ ВАШ КОД ЗДЕСЬ ▼
+-return null;
+-           // ▲ КОНЕЦ ВАШЕГО КОДА ▲
++            return items.stream().map(LibraryItem::book).max(Comparator.comparingDouble(Book::price));
++            // ▲ КОНЕЦ ВАШЕГО КОДА ▲
+         }
+ 
+         /**
+@@ -232,24 +232,7 @@
+     public static void main(String[] args) {
+         Library lib = new Library();
+ 
+-        // TODO: добавьте 8+ книг (физические и электронные). Пример:
+-        // lib.add(new PhysicalBook(new Book("Война и мир", "Толстой", 1869, Genre.FICTION, 800), "A-12"));
+-        // lib.add(new EBook(new Book("Clean Code", "Мартин", 2008, Genre.PROGRAMMING, 1500), "PDF", 5.2));
+-
+-        // TODO: вызовите и продемонстрируйте все методы Library:
+-        // System.out.println("=== Каталог ===");
+-        // lib.printCatalog();
+-        //
+-        // System.out.println("\n=== По жанрам ===");
+-        // lib.groupByGenre().forEach((genre, list) -> { ... });
+-        //
+-        // System.out.printf("\nОбщая стоимость: %.2f руб.%n", lib.totalValue());
+-        //
+-        // lib.mostExpensive().ifPresent(b -> System.out.println("Самая дорогая: " + b));
+-        //
+-        // System.out.println("\nАвторы программирования: " + lib.authorsByGenre(Genre.PROGRAMMING));
+-
+-
++        // Добавление 8+ книг (физические и электронные)
+         lib.add(new PhysicalBook(new Book("Война и мир", "Толстой", 1869, Genre.FICTION, 800), "A-12"));
+         lib.add(new PhysicalBook(new Book("История России", "Соловьёв", 1851, Genre.HISTORY, 1200), "H-3"));
+         lib.add(new EBook(new Book("Clean Code", "Мартин", 2008, Genre.PROGRAMMING, 1500), "PDF", 5.2));
+@@ -271,6 +254,5 @@
+         lib.mostExpensive().ifPresent(b -> System.out.println("Самая дорогая: " + b));
+ 
+         System.out.println("\nАвторы программирования: " + lib.authorsByGenre(Genre.PROGRAMMING));
+-
+     }
+ }
+\ No newline at end of file
